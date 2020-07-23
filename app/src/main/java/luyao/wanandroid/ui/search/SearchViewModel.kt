@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import luyao.util.ktx.base.BaseViewModel
-import luyao.wanandroid.core.Result
+import luyao.mvvm.core.Result
+import luyao.mvvm.core.base.BaseViewModel
 import luyao.wanandroid.model.bean.ArticleList
 import luyao.wanandroid.model.bean.Hot
 import luyao.wanandroid.model.repository.CollectRepository
@@ -39,7 +39,10 @@ class SearchViewModel(private val searchRepository: SearchRepository,
                 if (result is Result.Success) {
                     val articleList = result.data
                     if (articleList.offset >= articleList.total) {
-                        emitArticleUiState(showLoading = false, showEnd = true)
+                        if (articleList.offset > 0)
+                            emitArticleUiState(showLoading = false, showEnd = true)
+                        else
+                            emitArticleUiState(showLoading = false, isRefresh = true,showSuccess = ArticleList(0, 0, 0, 0, 0, false, emptyList()))
                         return@withContext
                     }
                     currentPage++

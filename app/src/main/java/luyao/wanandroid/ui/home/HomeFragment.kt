@@ -5,22 +5,22 @@ import android.widget.LinearLayout
 import androidx.core.os.bundleOf
 import androidx.lifecycle.Observer
 import androidx.navigation.Navigation
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.navigation.fragment.NavHostFragment
 import com.chad.library.adapter.base.BaseQuickAdapter
 import com.youth.banner.BannerConfig
 import kotlinx.android.synthetic.main.fragment_home.*
-import luyao.util.ktx.base.BaseVMFragment
+import luyao.mvvm.core.base.BaseVMFragment
 import luyao.util.ktx.ext.dp2px
 import luyao.util.ktx.ext.toast
 import luyao.wanandroid.R
 import luyao.wanandroid.adapter.HomeArticleAdapter
+import luyao.wanandroid.databinding.FragmentHomeBinding
 import luyao.wanandroid.model.bean.Banner
 import luyao.wanandroid.ui.BrowserActivity
 import luyao.wanandroid.ui.square.ArticleViewModel
 import luyao.wanandroid.util.GlideImageLoader
 import luyao.wanandroid.util.Preference
 import luyao.wanandroid.view.CustomLoadMoreView
-import luyao.wanandroid.view.SpaceItemDecoration
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
@@ -28,9 +28,10 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
  * Created by luyao
  * on 2018/3/13 14:15
  */
-class HomeFragment : BaseVMFragment<ArticleViewModel>() {
+class HomeFragment : BaseVMFragment<FragmentHomeBinding>(R.layout.fragment_home) {
 
-    private val mViewModel: ArticleViewModel by viewModel()
+    private val articleViewModel by viewModel<ArticleViewModel>()
+
     private val isLogin by Preference(Preference.IS_LOGIN, false)
     private val homeArticleAdapter by lazy { HomeArticleAdapter() }
     private val bannerImages = mutableListOf<String>()
@@ -38,16 +39,13 @@ class HomeFragment : BaseVMFragment<ArticleViewModel>() {
     private val bannerUrls = mutableListOf<String>()
     private val banner by lazy { com.youth.banner.Banner(activity) }
 
-    override fun getLayoutResId() = R.layout.fragment_home
-
     override fun initView() {
-
+        binding.run {
+            viewModel = articleViewModel
+            adapter = homeArticleAdapter
+        }
         initRecycleView()
         initBanner()
-
-        homeRefreshLayout.run {
-            setOnRefreshListener { refresh() }
-        }
     }
 
     override fun initData() {
@@ -55,14 +53,10 @@ class HomeFragment : BaseVMFragment<ArticleViewModel>() {
     }
 
     private fun initRecycleView() {
-        homeRecycleView.run {
-            layoutManager = LinearLayoutManager(activity)
-            addItemDecoration(SpaceItemDecoration(homeRecycleView.dp2px(10)))
-        }
         homeArticleAdapter.run {
             setOnItemClickListener { _, _, position ->
                 val bundle = bundleOf(BrowserActivity.URL to homeArticleAdapter.data[position].link)
-                androidx.navigation.Navigation.findNavController(homeRecycleView).navigate(R.id.action_tab_to_browser, bundle)
+                NavHostFragment.findNavController(this@HomeFragment).navigate(R.id.action_tab_to_browser, bundle)
             }
             onItemChildClickListener = this@HomeFragment.onItemChildClickListener
             if (headerLayoutCount > 0) removeAllHeaderView()
@@ -70,7 +64,6 @@ class HomeFragment : BaseVMFragment<ArticleViewModel>() {
             setLoadMoreView(CustomLoadMoreView())
             setOnLoadMoreListener({ loadMore() }, homeRecycleView)
         }
-        homeRecycleView.adapter = homeArticleAdapter
     }
 
     private val onItemChildClickListener = BaseQuickAdapter.OnItemChildClickListener { _, view, position ->
@@ -80,7 +73,7 @@ class HomeFragment : BaseVMFragment<ArticleViewModel>() {
                     homeArticleAdapter.run {
                         data[position].run {
                             collect = !collect
-                            mViewModel.collectArticle(id, collect)
+                            articleViewModel.collectArticle(id, collect)
                         }
                         notifyDataSetChanged()
                     }
@@ -92,7 +85,7 @@ class HomeFragment : BaseVMFragment<ArticleViewModel>() {
     }
 
     private fun loadMore() {
-        mViewModel.getHomeArticleList(false)
+        articleViewModel.getHomeArticleList(false)
     }
 
     private fun initBanner() {
@@ -110,22 +103,20 @@ class HomeFragment : BaseVMFragment<ArticleViewModel>() {
     }
 
     fun refresh() {
-        homeArticleAdapter.setEnableLoadMore(false)
-        mViewModel.getHomeArticleList(true)
+        articleViewModel.getHomeArticleList(true)
     }
 
     override fun startObserve() {
-        mViewModel.apply {
-            mBanners.observe(this@HomeFragment, Observer { it ->
+        articleViewModel.apply {
+            mBanners.observe(viewLifecycleOwner, Observer { it ->
                 it?.let { setBanner(it) }
             })
 
-            uiState.observe(this@HomeFragment, Observer {
-
-                homeRefreshLayout.isRefreshing = it.showLoading
+            uiState.observe(viewLifecycleOwner, Observer {
 
                 it.showSuccess?.let { list ->
                     homeArticleAdapter.run {
+                        homeArticleAdapter.setEnableLoadMore(false)
                         if (it.isRefresh) replaceData(list.datas)
                         else addData(list.datas)
                         setEnableLoadMore(true)

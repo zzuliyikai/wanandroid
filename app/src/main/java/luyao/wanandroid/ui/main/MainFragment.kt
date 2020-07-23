@@ -6,7 +6,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.android.synthetic.main.activity_new_main.*
-import luyao.util.ktx.base.BaseFragment
+import luyao.mvvm.core.base.BaseFragment
 import luyao.wanandroid.R
 import luyao.wanandroid.ui.home.HomeFragment
 import luyao.wanandroid.ui.navigation.NavigationFragment
@@ -45,7 +45,7 @@ class MainFragment : BaseFragment() {
     override fun initView() {
         initViewPager()
         addFab.setOnClickListener {
-            if (!isLogin)  Navigation.findNavController(viewPager).navigate(R.id.action_tab_to_login)
+            if (!isLogin) Navigation.findNavController(viewPager).navigate(R.id.action_tab_to_login)
             else Navigation.findNavController(viewPager).navigate(R.id.action_tab_to_share)
         }
     }

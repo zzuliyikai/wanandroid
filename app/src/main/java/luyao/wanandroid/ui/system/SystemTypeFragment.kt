@@ -1,25 +1,20 @@
 package luyao.wanandroid.ui.system
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.core.os.bundleOf
 import androidx.lifecycle.Observer
 import androidx.navigation.Navigation
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.chad.library.adapter.base.BaseQuickAdapter
 import kotlinx.android.synthetic.main.fragment_systemtype.*
-import luyao.util.ktx.base.BaseVMFragment
-import luyao.util.ktx.ext.dp2px
-import luyao.util.ktx.ext.startKtxActivity
+import luyao.mvvm.core.base.BaseVMFragment
 import luyao.util.ktx.ext.toast
 import luyao.wanandroid.R
 import luyao.wanandroid.adapter.HomeArticleAdapter
+import luyao.wanandroid.databinding.FragmentSystemtypeBinding
 import luyao.wanandroid.ui.BrowserActivity
-import luyao.wanandroid.ui.login.LoginActivity
 import luyao.wanandroid.ui.square.ArticleViewModel
 import luyao.wanandroid.util.Preference
 import luyao.wanandroid.view.CustomLoadMoreView
-import luyao.wanandroid.view.SpaceItemDecoration
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
@@ -27,12 +22,10 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
  * Created by Lu
  * on 2018/3/27 21:36
  */
-class SystemTypeFragment : BaseVMFragment<ArticleViewModel>() {
+class SystemTypeFragment : BaseVMFragment<FragmentSystemtypeBinding>(R.layout.fragment_systemtype) {
 
+    private val articleViewModel by viewModel<ArticleViewModel>()
     private val isLogin by Preference(Preference.IS_LOGIN, false)
-
-    private val mViewModel: ArticleViewModel by viewModel()
-
     private val cid by lazy { arguments?.getInt(CID) }
     private val isBlog by lazy { arguments?.getBoolean(BLOG) ?: false } // 区分是体系下的文章列表还是公众号下的文章列表
     private val systemTypeAdapter by lazy { HomeArticleAdapter() }
@@ -50,9 +43,11 @@ class SystemTypeFragment : BaseVMFragment<ArticleViewModel>() {
         }
     }
 
-    override fun getLayoutResId() = R.layout.fragment_systemtype
-
     override fun initView() {
+        binding.run {
+            viewModel = articleViewModel
+            adapter = systemTypeAdapter
+        }
         initRecycleView()
     }
 
@@ -71,11 +66,6 @@ class SystemTypeFragment : BaseVMFragment<ArticleViewModel>() {
             setLoadMoreView(CustomLoadMoreView())
             setOnLoadMoreListener({ loadMore() }, typeRecycleView)
         }
-        typeRecycleView.run {
-            layoutManager = LinearLayoutManager(context)
-            addItemDecoration(SpaceItemDecoration(typeRecycleView.dp2px(10)))
-            adapter = systemTypeAdapter
-        }
     }
 
     private val onItemChildClickListener = BaseQuickAdapter.OnItemChildClickListener { _, view, position ->
@@ -85,7 +75,7 @@ class SystemTypeFragment : BaseVMFragment<ArticleViewModel>() {
                     systemTypeAdapter.run {
                         data[position].run {
                             collect = !collect
-                            mViewModel.collectArticle(id, collect)
+                            articleViewModel.collectArticle(id, collect)
                         }
                         notifyDataSetChanged()
                     }
@@ -109,14 +99,14 @@ class SystemTypeFragment : BaseVMFragment<ArticleViewModel>() {
     private fun loadData(isRefresh: Boolean) {
         cid?.let {
             if (this.isBlog)
-                mViewModel.getBlogArticleList(isRefresh, it)
+                articleViewModel.getBlogArticleList(isRefresh, it)
             else
-                mViewModel.getSystemTypeArticleList(isRefresh, it)
+                articleViewModel.getSystemTypeArticleList(isRefresh, it)
         }
     }
 
     override fun startObserve() {
-        mViewModel.uiState.observe(this, Observer {
+        articleViewModel.uiState.observe(viewLifecycleOwner, Observer {
             typeRefreshLayout.isRefreshing = it.showLoading
 
             it.showSuccess?.let { list ->

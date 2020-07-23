@@ -2,52 +2,44 @@ package luyao.wanandroid.ui.login
 
 import android.app.ProgressDialog
 import androidx.lifecycle.Observer
-import kotlinx.android.synthetic.main.title_layout.*
 import luyao.mvvm.core.base.BaseVMActivity
 import luyao.util.ktx.ext.toast
 import luyao.wanandroid.R
 import luyao.wanandroid.databinding.ActivityLoginBinding
-import org.koin.androidx.viewmodel.ext.android.getViewModel
+import luyao.wanandroid.model.bean.Title
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
  * Created by Lu
  * on 2018/4/5 07:56
  */
-class LoginActivity : BaseVMActivity<LoginViewModel>() {
+class LoginActivity : BaseVMActivity() {
 
-
-    override fun getLayoutResId() = R.layout.activity_login
-
-    override fun initVM(): LoginViewModel = getViewModel()
+    private val loginViewModel by viewModel<LoginViewModel>()
+    private val binding by binding<ActivityLoginBinding>(R.layout.activity_login)
 
     override fun initView() {
-        (mBinding as ActivityLoginBinding).viewModel = mViewModel
-        mToolbar.setTitle(R.string.login)
-        mToolbar.setNavigationIcon(R.drawable.arrow_back)
+        binding.run {
+            viewModel = loginViewModel
+            title =  Title(R.string.login, R.drawable.arrow_back) { onBackPressed() }
+        }
     }
 
     override fun initData() {
-        mToolbar.setNavigationOnClickListener { onBackPressed() }
     }
 
     override fun startObserve() {
-        mViewModel.apply {
-
-            mRegisterUser.observe(this@LoginActivity, Observer {
-                it?.run {
-                    mViewModel.login()
-                }
-            })
+        loginViewModel.apply {
 
             uiState.observe(this@LoginActivity, Observer {
-                if (it.showProgress) showProgressDialog()
+                if (it.isLoading) showProgressDialog()
 
-                it.showSuccess?.let {
+                it.isSuccess?.let {
                     dismissProgressDialog()
                     finish()
                 }
 
-                it.showError?.let { err ->
+                it.isError?.let { err ->
                     dismissProgressDialog()
                     toast(err)
                 }

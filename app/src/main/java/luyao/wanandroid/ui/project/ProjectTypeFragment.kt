@@ -4,23 +4,19 @@ import android.os.Bundle
 import androidx.core.os.bundleOf
 import androidx.lifecycle.Observer
 import androidx.navigation.Navigation
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.chad.library.adapter.base.BaseQuickAdapter
 import kotlinx.android.synthetic.main.fragment_projecttype.*
 import kotlinx.android.synthetic.main.fragment_systemtype.*
-import luyao.util.ktx.base.BaseVMFragment
-import luyao.util.ktx.ext.dp2px
-import luyao.util.ktx.ext.startKtxActivity
+import luyao.mvvm.core.base.BaseVMFragment
 import luyao.wanandroid.BR
 import luyao.wanandroid.R
 import luyao.wanandroid.adapter.BaseBindAdapter
+import luyao.wanandroid.databinding.FragmentProjecttypeBinding
 import luyao.wanandroid.model.bean.Article
 import luyao.wanandroid.ui.BrowserActivity
-import luyao.wanandroid.ui.login.LoginActivity
 import luyao.wanandroid.ui.square.ArticleViewModel
 import luyao.wanandroid.util.Preference
 import luyao.wanandroid.view.CustomLoadMoreView
-import luyao.wanandroid.view.SpaceItemDecoration
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
@@ -28,15 +24,14 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
  * Created by Lu
  * on 2018/4/1 17:06
  */
-class ProjectTypeFragment : BaseVMFragment<ArticleViewModel>() {
+class ProjectTypeFragment : BaseVMFragment<FragmentProjecttypeBinding>(R.layout.fragment_projecttype) {
+
+    private val articleViewModel by viewModel<ArticleViewModel>()
 
     private val isLogin by Preference(Preference.IS_LOGIN, false)
-    private val mViewModel: ArticleViewModel by viewModel()
     private val cid by lazy { arguments?.getInt(CID) }
     private val isLasted by lazy { arguments?.getBoolean(LASTED) } // 区分是最新项目 还是项目分类
     private val projectAdapter by lazy { BaseBindAdapter<Article>(R.layout.item_project, BR.article) }
-
-    override fun getLayoutResId() = R.layout.fragment_projecttype
 
     companion object {
         private const val CID = "projectCid"
@@ -52,6 +47,7 @@ class ProjectTypeFragment : BaseVMFragment<ArticleViewModel>() {
     }
 
     override fun initView() {
+        binding.adapter = projectAdapter
         initRecycleView()
     }
 
@@ -74,11 +70,6 @@ class ProjectTypeFragment : BaseVMFragment<ArticleViewModel>() {
             setOnLoadMoreListener({ loadMore() }, typeRecycleView)
             onItemChildClickListener = this@ProjectTypeFragment.onItemChildClickListener
         }
-        projectRecycleView.run {
-            layoutManager = LinearLayoutManager(activity)
-            addItemDecoration(SpaceItemDecoration(projectRecycleView.dp2px(10)))
-            adapter = projectAdapter
-        }
     }
 
     private fun loadMore() {
@@ -89,10 +80,10 @@ class ProjectTypeFragment : BaseVMFragment<ArticleViewModel>() {
     private fun loadData(isRefresh: Boolean) {
         isLasted?.run {
             if (this) {
-                mViewModel.getLatestProjectList(isRefresh)
+                articleViewModel.getLatestProjectList(isRefresh)
             } else {
                 cid?.let {
-                    mViewModel.getProjectTypeDetailList(isRefresh, it)
+                    articleViewModel.getProjectTypeDetailList(isRefresh, it)
                 }
             }
         }
@@ -105,7 +96,7 @@ class ProjectTypeFragment : BaseVMFragment<ArticleViewModel>() {
                     projectAdapter.run {
                         data[position].run {
                             collect = !collect
-                            mViewModel.collectArticle(id, collect)
+                            articleViewModel.collectArticle(id, collect)
                         }
                         notifyDataSetChanged()
                     }
@@ -117,7 +108,7 @@ class ProjectTypeFragment : BaseVMFragment<ArticleViewModel>() {
     }
 
     override fun startObserve() {
-        mViewModel.uiState.observe(this@ProjectTypeFragment, Observer {
+        articleViewModel.uiState.observe(viewLifecycleOwner, Observer {
             projectRefreshLayout.isRefreshing = it.showLoading
 
             it.showSuccess?.let { list ->

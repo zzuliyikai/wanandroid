@@ -2,8 +2,6 @@ package luyao.wanandroid
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
-import com.tencent.smtt.sdk.QbSdk
 import luyao.mvvm.core.util.Timer
 import luyao.wanandroid.di.appModule
 import luyao.wanandroid.model.bean.User

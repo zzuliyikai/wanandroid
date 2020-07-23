@@ -8,6 +8,10 @@
         <variable
             name="viewModel"
             type="luyao.wanandroid.ui.login.LoginViewModel" />
+
+        <variable
+            name="title"
+            type="luyao.wanandroid.model.bean.Title" />
     </data>
 
 
@@ -16,7 +20,8 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <include layout="@layout/title_layout" />
+        <include layout="@layout/title_layout"
+            app:title="@{title}"/>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/userNameLayout"
@@ -53,7 +58,7 @@
         </com.google.android.material.textfield.TextInputLayout>
 
 
-        <androidx.appcompat.widget.AppCompatButton
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/login"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -67,7 +72,7 @@
             android:textSize="16sp"
             android:onClick="@{() -> viewModel.login()}"/>
 
-        <androidx.appcompat.widget.AppCompatButton
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/register"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

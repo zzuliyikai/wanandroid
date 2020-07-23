@@ -2,9 +2,8 @@ package luyao.wanandroid.ui.square
 
 import androidx.lifecycle.Observer
 import androidx.navigation.Navigation
-import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.fragment_square.*
-import luyao.util.ktx.ext.dp2px
+import luyao.mvvm.core.base.BaseVMFragment
 import luyao.util.ktx.ext.startKtxActivity
 import luyao.util.ktx.ext.toast
 import luyao.wanandroid.BR
@@ -14,25 +13,23 @@ import luyao.wanandroid.databinding.FragmentSquareBinding
 import luyao.wanandroid.model.bean.Article
 import luyao.wanandroid.ui.BrowserActivity
 import luyao.wanandroid.view.CustomLoadMoreView
-import luyao.wanandroid.view.SpaceItemDecoration
-import org.koin.androidx.viewmodel.ext.android.getViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
  * Created by luyao
  * on 2019/10/15 10:18
  */
-class SquareFragment : luyao.mvvm.core.base.BaseVMFragment<ArticleViewModel>() {
+class SquareFragment : BaseVMFragment<FragmentSquareBinding>(R.layout.fragment_square) {
 
-    override fun initVM(): ArticleViewModel = getViewModel()
+    private val articleViewModel by viewModel<ArticleViewModel>()
 
-    private val squareAdapter by lazy { BaseBindAdapter<Article>(R.layout.item_square, BR.article) }
-
-    override fun getLayoutResId() = R.layout.fragment_square
-
+    private val squareAdapter by lazy { BaseBindAdapter<Article>(R.layout.item_square_constraint, BR.article) }
 
     override fun initView() {
-        mBinding.lifecycleOwner = this
-        (mBinding as FragmentSquareBinding).viewModel = mViewModel
+        binding.run {
+            viewModel = articleViewModel
+            adapter = squareAdapter
+        }
         initRecycleView()
     }
 
@@ -48,23 +45,18 @@ class SquareFragment : luyao.mvvm.core.base.BaseVMFragment<ArticleViewModel>() {
             setLoadMoreView(CustomLoadMoreView())
             setOnLoadMoreListener({ loadMore() }, squareRecycleView)
         }
-        squareRecycleView.run {
-            layoutManager = LinearLayoutManager(activity)
-            addItemDecoration(SpaceItemDecoration(squareRecycleView.dp2px(10)))
-            adapter = squareAdapter
-        }
     }
 
     private fun loadMore() {
-        mViewModel.getSquareArticleList(false)
+        articleViewModel.getSquareArticleList(false)
     }
 
     fun refresh() {
-        mViewModel.getSquareArticleList(true)
+        articleViewModel.getSquareArticleList(true)
     }
 
     override fun startObserve() {
-        mViewModel.uiState.observe(this, Observer {
+        articleViewModel.uiState.observe(viewLifecycleOwner, Observer {
 
             it.showSuccess?.let { list ->
                 squareAdapter.run {
